@@ -1,0 +1,187 @@
+meta:
+  version: 3
+  flow: Chip
+  substituting_steps:
+
+DESIGN_NAME: chip_top
+VERILOG_FILES:
+- dir::../../AZ_V/rtl/pkg/riscv_pkg.sv
+- dir::../../AZ_V_UART/rtl/pkg/uart_pkg.sv
+- dir::../rtl/jtag/jtag_tap.sv
+- dir::../rtl/jtag/jtag_dtm.sv
+- dir::../rtl/jtag/jtag_dm.sv
+- dir::../rtl/bus/az_v_soc_interconnect.sv
+- dir::../rtl/az_v_soc_top.sv
+- dir::../rtl/asic/sram_bank_array.sv
+- dir::../rtl/asic/chip_core.sv
+- dir::../rtl/asic/chip_top.sv
+
+USE_SLANG: True
+SLANG_ARGUMENTS: ['--keep-hierarchy']
+
+VERILOG_DEFINES: ["ASIC_SYNTHESIS", "SLOT_1X1"]
+
+PRIMARY_GDSII_STREAMOUT_TOOL: klayout
+
+PNR_SDC_FILE: dir::chip_top.sdc
+SIGNOFF_SDC_FILE: dir::chip_top.sdc
+FALLBACK_SDC: dir::chip_top.sdc
+
+VDD_NETS:
+- VDD
+GND_NETS:
+- VSS
+
+IGNORE_DISCONNECTED_MODULES:
+- gf180mcu_fd_io__bi_24t
+- gf180mcu_ws_ip__id
+- gf180mcu_ws_ip__logo
+- gf180mcu_fd_ip_sram__sram512x8m8wm1
+- az_v_core_top
+- az_v_uart_top
+
+CLOCK_PORT: clk_PAD
+CLOCK_NET: clk_pad/Y
+CLOCK_PERIOD: 40
+
+PL_RESIZER_HOLD_SLACK_MARGIN: 0.35
+GRT_RESIZER_HOLD_SLACK_MARGIN: 0.3
+
+PL_TARGET_DENSITY_PCT: 35
+GRT_ALLOW_CONGESTION: true
+
+DRT_ANTENNA_REPAIR_ITERS: 10
+DRT_ANTENNA_REPAIR_MARGIN: 10
+
+PDN_VWIDTH: 5
+PDN_HWIDTH: 5
+PDN_VSPACING: 1
+PDN_HSPACING: 1
+PDN_VPITCH: 75
+PDN_HPITCH: 75
+
+PDN_CORE_RING: True
+PDN_CORE_RING_VWIDTH: 25
+PDN_CORE_RING_HWIDTH: 25
+PDN_CORE_RING_CONNECT_TO_PADS: True
+PDN_ENABLE_PINS: False
+PDN_CORE_VERTICAL_LAYER: Metal2
+PDN_CORE_HORIZONTAL_LAYER: Metal3
+
+ERROR_ON_MAGIC_DRC: False
+
+MACROS:
+  az_v_core_top:
+    gds:
+      - dir::../final_cpu/gds/az_v_core_top.gds
+    lef:
+      - dir::../final_cpu/lef/az_v_core_top.lef
+    vh:
+      - dir::../final_cpu/vh/az_v_core_top.vh
+    lib:
+      "*_tt_025C_5v00":
+        - dir::../final_cpu/lib/nom_tt_025C_5v00/az_v_core_top__nom_tt_025C_5v00.lib
+      "*_ff_n40C_5v50":
+        - dir::../final_cpu/lib/nom_ff_n40C_5v50/az_v_core_top__nom_ff_n40C_5v50.lib
+      "*_ss_125C_4v50":
+        - dir::../final_cpu/lib/nom_ss_125C_4v50/az_v_core_top__nom_ss_125C_4v50.lib
+    instances:
+      "i_chip_core.u_soc.u_cpu":
+        location: [550, 550]
+        orientation: N
+
+  az_v_uart_top:
+    gds:
+      - dir::../final_uart/gds/az_v_uart_top.gds
+    lef:
+      - dir::../final_uart/lef/az_v_uart_top.lef
+    vh:
+      - dir::../final_uart/vh/az_v_uart_top.vh
+    lib:
+      "*_tt_025C_5v00":
+        - dir::../final_uart/lib/nom_tt_025C_5v00/az_v_uart_top__nom_tt_025C_5v00.lib
+      "*_ff_n40C_5v50":
+        - dir::../final_uart/lib/nom_ff_n40C_5v50/az_v_uart_top__nom_ff_n40C_5v50.lib
+      "*_ss_125C_4v50":
+        - dir::../final_uart/lib/nom_ss_125C_4v50/az_v_uart_top__nom_ss_125C_4v50.lib
+    instances:
+      "i_chip_core.u_soc.u_uart":
+        location: [2500, 550]
+        orientation: N
+
+  gf180mcu_ws_ip__id:
+    gds:
+      - dir::../../gf180mcu-project-template/ip/gf180mcu_ws_ip__id/gds/gf180mcu_ws_ip__id.gds
+    lef:
+      - dir::../../gf180mcu-project-template/ip/gf180mcu_ws_ip__id/lef/gf180mcu_ws_ip__id.lef
+    vh:
+      - dir::../../gf180mcu-project-template/ip/gf180mcu_ws_ip__id/vh/gf180mcu_ws_ip__id.v
+    lib:
+      "*":
+        - dir::../../gf180mcu-project-template/ip/gf180mcu_ws_ip__id/lib/gf180mcu_ws_ip__id.lib
+    instances:
+      chip_id:
+        location: [26, 26]
+        orientation: N
+
+  gf180mcu_ws_ip__logo:
+    gds:
+      - dir::../../gf180mcu-project-template/ip/gf180mcu_ws_ip__logo/gds/gf180mcu_ws_ip__logo.gds
+    lef:
+      - dir::../../gf180mcu-project-template/ip/gf180mcu_ws_ip__logo/lef/gf180mcu_ws_ip__logo.lef
+    vh:
+      - dir::../../gf180mcu-project-template/ip/gf180mcu_ws_ip__logo/vh/gf180mcu_ws_ip__logo.v
+    lib:
+      "*":
+        - dir::../../gf180mcu-project-template/ip/gf180mcu_ws_ip__logo/lib/gf180mcu_ws_ip__logo.lib
+    instances:
+      wafer_space_logo:
+        location: ["expr::$DIE_AREA[2] + -169.25", "expr::$DIE_AREA[3] + -169.25"]
+        orientation: N
+
+  gf180mcu_fd_ip_sram__sram512x8m8wm1:
+    gds:
+      - pdk_dir::libs.ref/gf180mcu_fd_ip_sram/gds/gf180mcu_fd_ip_sram__sram512x8m8wm1.gds
+    lef:
+      - pdk_dir::libs.ref/gf180mcu_fd_ip_sram/lef/gf180mcu_fd_ip_sram__sram512x8m8wm1.lef
+    vh:
+      - pdk_dir::libs.ref/gf180mcu_fd_ip_sram/verilog/gf180mcu_fd_ip_sram__sram512x8m8wm1__blackbox.v
+    lib:
+      "*_tt_025C_5v00":
+        - pdk_dir::libs.ref/gf180mcu_fd_ip_sram/lib/gf180mcu_fd_ip_sram__sram512x8m8wm1__tt_025C_5v00.lib
+      "*_ff_n40C_5v50":
+        - pdk_dir::libs.ref/gf180mcu_fd_ip_sram/lib/gf180mcu_fd_ip_sram__sram512x8m8wm1__ff_n40C_5v50.lib
+      "*_ss_125C_4v50":
+        - pdk_dir::libs.ref/gf180mcu_fd_ip_sram/lib/gf180mcu_fd_ip_sram__sram512x8m8wm1__ss_125C_4v50.lib
+    instances:
+      "i_chip_core.u_soc.u_sram_bank_array.gen_bank0[0].u_sram_b0":
+        location: [550, 2500]
+        orientation: N
+      "i_chip_core.u_soc.u_sram_bank_array.gen_bank0[1].u_sram_b0":
+        location: [1020, 2500]
+        orientation: N
+      "i_chip_core.u_soc.u_sram_bank_array.gen_bank0[2].u_sram_b0":
+        location: [1490, 2500]
+        orientation: N
+      "i_chip_core.u_soc.u_sram_bank_array.gen_bank0[3].u_sram_b0":
+        location: [1960, 2500]
+        orientation: N
+      "i_chip_core.u_soc.u_sram_bank_array.gen_bank1[0].u_sram_b1":
+        location: [550, 3040]
+        orientation: N
+      "i_chip_core.u_soc.u_sram_bank_array.gen_bank1[1].u_sram_b1":
+        location: [1020, 3040]
+        orientation: N
+      "i_chip_core.u_soc.u_sram_bank_array.gen_bank1[2].u_sram_b1":
+        location: [1490, 3040]
+        orientation: N
+      "i_chip_core.u_soc.u_sram_bank_array.gen_bank1[3].u_sram_b1":
+        location: [1960, 3040]
+        orientation: N
+
+FP_MACRO_HORIZONTAL_HALO: 10
+FP_MACRO_VERTICAL_HALO: 10
+PDN_HORIZONTAL_HALO: 5
+PDN_VERTICAL_HALO: 5
+
+PDN_CFG: dir::pdn_cfg.tcl

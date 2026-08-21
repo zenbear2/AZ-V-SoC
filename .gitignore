@@ -1,0 +1,19 @@
+# Build and simulation artifacts
+obj_dir/
+*.vcd
+*.log
+*.vpd
+*.fsdb
+__pycache__/
+*.pyc
+.DS_Store
+
+# LibreLane intermediate runs
+librelane/runs/
+runs/
+
+# Large binary deliverables (>100MB files that exceed GitHub limit)
+*.gds
+*.magic.gds
+*.mag
+*.odb
