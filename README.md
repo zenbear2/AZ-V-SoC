@@ -1,33 +1,31 @@
-# AZ_V System-on-Chip (AZ_V_SoC)
+# AZ-V-SoC: 32-Bit RISC-V System-on-Chip
 
-![AZ_V SoC](https://img.shields.io/badge/Architecture-RISC--V%20RV32I-blue)
-![BPU](https://img.shields.io/badge/Front--End-BTB%20%7C%20BHT%20%7C%20RAS-brightgreen)
-![Debug](https://img.shields.io/badge/Debug-IEEE%201149.1%20JTAG%20(TAP%2FDTM%2FDM)-orange)
-![UART](https://img.shields.io/badge/Bus-AXI4--Lite%20UART-yellow)
-![ASIC](https://img.shields.io/badge/ASIC%20Flow-LibreLane%20Hierarchical%20Macro-red)
-![Sim](https://img.shields.io/badge/Simulator-Verilator-purple)
+[English](README.md) | [繁體中文](README_zh.md)
 
-**AZ_V_SoC** 是一個整合 **AZ_V 32-位元 RISC-V 處理器核心**（具備 Branch Target Buffer, Branch History Table, Return Address Stack 與 Instruction Queue）、**AXI4-Lite UART IP 週邊**、**IEEE 1149.1 JTAG 偵錯子系統** 以及 **4KB SRAM 記憶體陣列** 的完整 System-on-Chip (SoC)。
+**AZ-V-SoC** (formerly **AZ_V_SoC**) is a 32-bit RISC-V System-on-Chip (SoC) architecture integrating the **AZ-V32M** processor core (with BTB, BHT, RAS branch prediction and an instruction queue), an **AXI4-Lite UART** peripheral, an **IEEE 1149.1 JTAG debug subsystem**, and a **4KB SRAM memory array**.
 
-本專案支援 **階層式硬體巨集 ASIC 流程 (Hierarchical Hard Macro PnR Flow)**，直接引用包含分支預測器與指令佇列的 CPU RTL ([`AZ_V/rtl`](file:///home/user/workspace/AZ_V/rtl)) 與 UART RTL ([`AZ_V_UART/rtl`](file:///home/user/workspace/AZ_V_UART/rtl))，無需複製原始碼檔案。
+The repository supports a **Hierarchical Hard Macro ASIC PnR Flow** (LibreLane / OpenLane on the GlobalFoundries GF180MCU PDK), directly referencing the CPU core RTL ([`AZ-V32M/rtl`](../AZ-V32M/rtl)) and UART peripheral RTL ([`AXI-Peripheral/AXI_UART/rtl`](../AXI-Peripheral/AXI_UART/rtl)).
 
 ---
 
-## 系統架構圖 (System Architecture)
+## System Architecture
 
 ```mermaid
-graph TD
-    subgraph AZ_V_SoC ["AZ_V System-on-Chip Top"]
-        subgraph CPU_SUB ["AZ_V CPU Core Macro (az_v_core_top)"]
-            CPU["RV32I 5-Stage Pipeline\n(IF, ID, EX, MEM, WB)"]
+flowchart TD
+    subgraph AZ_V_SOC ["AZ-V-SoC Top"]
+        subgraph CPU_SUB ["AZ-V32M CPU Core Macro (az_v_core_top)"]
+            CPU["RV32I 5-Stage Pipeline<br/>(IF, ID, EX, MEM, WB)"]
             BPU["BPU (BTB + BHT + RAS)"]
             IQ["Instruction Queue"]
+            BPU --> CPU
+            IQ --> CPU
         end
 
         subgraph JTAG_SUB ["JTAG Debug Subsystem"]
-            TAP["JTAG TAP Controller\n(IDCODE: 0x1A2B3C4D)"]
+            TAP["JTAG TAP Controller<br/>(IDCODE: 0x1A2B3C4D)"]
             DTM["JTAG DTM (Debug Transport Module)"]
-            DM["JTAG DM (Debug Module)\n(GPR / PC / Mem Access)"]
+            DM["JTAG DM (Debug Module)<br/>(GPR / PC / Mem Access)"]
+            TAP --> DTM --> DM
         end
         
         subgraph BUS ["az_v_soc_interconnect (Memory-Mapped Bus Decoder)"]
@@ -35,128 +33,128 @@ graph TD
             UART_AXI["AXI4-Lite Master Bridge (UART)"]
         end
 
-        SRAM_BANK["4KB SRAM Bank Array (sram_bank_array)\n(8 x 512B gf180mcu_fd_ip_sram Macros)"]
+        SRAM_BANK["4KB SRAM Bank Array (sram_bank_array)<br/>(8 x 512B gf180mcu_fd_ip_sram Macros)"]
         
-        subgraph UART_SUB ["UART IP Macro (az_v_uart_top)"]
-            UART_CORE["AXI4-Lite UART Core\n(TX/RX FIFOs + Baud Generator)"]
+        subgraph UART_SUB ["UART IP Macro (axi_uart_top)"]
+            UART_CORE["AXI4-Lite UART Core<br/>(TX/RX FIFOs + Baud Generator)"]
         end
 
-        JTAG_PINS["JTAG Pins\n(TCK, TMS, TDI, TDO, TRST_N)"] --> TAP
-        TAP --> DTM --> DM
-        DM -->|Halt / Resume / GPR / PC| CPU
-        DM -->|Debug Mem Master| BUS
+        DM -->|"Halt / Resume / GPR / PC"| CPU
+        DM -->|"Debug Mem Master"| BUS
 
-        CPU -->|imem_addr / rdata| SRAM_BANK
-        CPU -->|dmem_bus| BUS
+        CPU -->|"imem_addr / rdata"| SRAM_BANK
+        CPU -->|"dmem_bus"| BUS
         
         BUS --> RAM_CTL --> SRAM_BANK
-        BUS --> UART_AXI -->|AXI4-Lite| UART_CORE
+        BUS --> UART_AXI -->|"AXI4-Lite"| UART_CORE
     end
 
-    UART_CORE -->|uart_tx_pin / uart_rx_pin| SERIAL_PINS["Serial IO Pins"]
+    JTAG_PINS["JTAG Pins (TCK, TMS, TDI, TDO, TRST_N)"] --> TAP
+    UART_CORE -->|"uart_tx_pin / uart_rx_pin"| SERIAL_PINS["Serial IO Pins"]
 ```
 
 ---
 
-## 記憶體映射表 (Memory Map)
+## Memory Map
 
-AZ_V CPU 採用統一的 32 位元實體位址空間：
+AZ-V-SoC implements a unified 32-bit physical address space:
 
-| 位址範圍 (Address Range) | 容量/區域 | 模組 (Module) | 描述 (Description) |
+| Address Range | Size / Region | Module | Description |
 |---|---|---|---|
-| `0x0000_0000` - `0x0000_0FFF` | **4 KB** | **Main SRAM** | 4KB 統一指令與資料 SRAM (8 顆 512B SRAM Macros) |
-| `0x1000_0000` - `0x1000_003F` | **64 B** | **UART IP** | AXI4-Lite UART 暫存器區塊 |
-| `JTAG DMI Access` | - | **Debug Module** | 透過 JTAG 存取 GPR (x0-x31), PC 及 SRAM 記憶體 |
+| `0x0000_0000` - `0x0000_0FFF` | **4 KB** | **Main SRAM** | Unified Instruction and Data SRAM (8x 512B GF180MCU SRAM primitives) |
+| `0x1000_0000` - `0x1000_003F` | **64 B** | **UART IP** | AXI4-Lite UART register block |
+| `JTAG DMI Access` | - | **Debug Module** | Hardware debug access to GPR (x0-x31), PC, and SRAM address space |
 
 ---
 
-## ASIC 階層式硬體巨集流程 (Hierarchical Macro GDS Flow)
+## Hierarchical Hard Macro ASIC Flow (GF180MCU)
 
-本專案採用 **LibreLane 3-階段階層式 PnR 流程**，實作硬體巨集分階段產出與頂層整合：
+This design uses a **LibreLane 3-phase hierarchical PnR flow** to harden sub-blocks into macro GDS/LEF before top-level chip integration:
 
 ```mermaid
-flowgraph LR
-    RTL_CPU["AZ_V/rtl (CPU RTL)"] --> STEP1["Phase 1: make librelane-cpu\n(Output: final_cpu/ Macro GDS/LEF)"]
-    RTL_UART["AZ_V_UART/rtl (UART RTL)"] --> STEP2["Phase 2: make librelane-uart\n(Output: final_uart/ Macro GDS/LEF)"]
+flowchart LR
+    RTL_CPU["AZ-V32M/rtl<br/>(CPU Core RTL)"] --> STEP1["Phase 1: make librelane-cpu<br/>(Output: final_cpu/ Macro GDS/LEF)"]
+    RTL_UART["AXI-Peripheral/AXI_UART/rtl<br/>(UART Peripheral RTL)"] --> STEP2["Phase 2: make librelane-uart<br/>(Output: final_uart/ Macro GDS/LEF)"]
     
-    STEP1 --> STEP3["Phase 3: make librelane-nodrc\n(Top SoC with JTAG + SRAM Macros)"]
+    STEP1 --> STEP3["Phase 3: make librelane-nodrc<br/>(Top SoC with JTAG + SRAM Macros)"]
     STEP2 --> STEP3
-    RTL_SOC["AZ_V_SoC/rtl (JTAG + Interconnect)"] --> STEP3
-    SRAM_IP["GF180MCU SRAM Macros (8x 512B)"] --> STEP3
+    RTL_SOC["AZ-V-SoC/rtl<br/>(JTAG + Interconnect)"] --> STEP3
+    SRAM_IP["GF180MCU SRAM Macros<br/>(8x 512B)"] --> STEP3
 ```
 
-### 1. 金屬層分工設定 (`RT_MAX_LAYER: Metal4`)
-* **巨集內部繞線 (Sub-block Macros)**：`az_v_core_top` 與 `az_v_uart_top` 的繞線上限限制為 **Metal4** (`RT_MAX_LAYER: Metal4`)。
-* **頂層整合 (Top SoC Integration)**：預留頂層最高金屬層 **Metal5** 給 `chip_top` 進行全晶片電源網格 (Power Straps) 鋪設與跨巨集信號走線。
+### 1. Metal Layer Routing Constraints (`RT_MAX_LAYER: Metal4`)
+* **Sub-block Macros**: `az_v_core_top` and `axi_uart_top` are constrained to routing layers up to **Metal4** (`RT_MAX_LAYER: Metal4`).
+* **Top-Level Integration**: The top metal layer **Metal5** is reserved for top-level power grid distribution (power straps) and inter-macro routing at `chip_top`.
 
-### 2. LibreLane 執行命令
-* **Phase 1: 產出 CPU Hard Macro GDS/LEF**
+### 2. LibreLane Commands
+* **Phase 1: CPU Hard Macro GDS/LEF**
   ```bash
   make librelane-cpu
-  # 使用 --run-tag az_v_cpu_macro，視圖保存至 final_cpu/
+  # Uses --run-tag az_v_cpu_macro; views saved to final_cpu/
   ```
-* **Phase 2: 產出 UART Hard Macro GDS/LEF**
+* **Phase 2: UART Hard Macro GDS/LEF**
   ```bash
   make librelane-uart
-  # 使用 --run-tag az_v_uart_macro，視圖保存至 final_uart/
+  # Uses --run-tag az_v_uart_macro; views saved to final_uart/
   ```
-* **Phase 3: 產出完整帶有 JTAG 的 Top-Level SoC GDS**
+* **Phase 3: Top-Level SoC GDS with JTAG & SRAM**
   ```bash
   make librelane-nodrc
-  # 使用 --run-tag chip_top_soc，整合 JTAG + CPU Macro + UART Macro + 4KB SRAM Macros
+  # Uses --run-tag chip_top_soc; integrates JTAG + CPU Macro + UART Macro + 4KB SRAM Macros
   ```
-* **一鍵執行全流程**：
+* **Run Entire ASIC Flow**:
   ```bash
   make librelane-all
   ```
 
 ---
 
-## 專案目錄結構 (Directory Structure)
+## Repository Structure
 
 ```text
-AZ_V_SoC/
-├── README.md                     # SoC 專案說明文件 (本文件)
-├── Makefile                      # Verilator 模擬與 LibreLane 階層式 GDS Makefile
-├── librelane/                    # LibreLane 晶片與 Macro 設定檔
-│   ├── config_cpu.yaml           # CPU Hard Macro PnR 設定 (RT_MAX_LAYER: Metal4)
-│   ├── config_uart.yaml          # UART Hard Macro PnR 設定 (RT_MAX_LAYER: Metal4)
-│   └── config.yaml               # Top SoC 晶片層級 PnR 設定 (含 JTAG + Macro 宣告)
-├── rtl/                          # SystemVerilog RTL
-│   ├── az_v_soc_top.sv           # Top-Level SoC 頂層模組
+AZ-V-SoC/
+├── Makefile                      # Verilator simulation and LibreLane hierarchical PnR targets
+├── librelane/                    # LibreLane flow configuration files
+│   ├── config_cpu.yaml           # CPU Hard Macro PnR config (RT_MAX_LAYER: Metal4)
+│   ├── config_uart.yaml          # UART Hard Macro PnR config (RT_MAX_LAYER: Metal4)
+│   └── config.yaml               # Top-level SoC PnR config (JTAG + Macro placement)
+├── rtl/                          # SystemVerilog RTL source files
+│   ├── az_v_soc_top.sv           # Top-level SoC wrapper
 │   ├── bus/
-│   │   └── az_v_soc_interconnect.sv # 記憶體映射匯流排解碼與 AXI4-Lite 轉接器
-│   ├── jtag/                     # IEEE 1149.1 JTAG 偵錯子系統
-│   │   ├── jtag_tap.sv           # JTAG TAP 控制器
+│   │   └── az_v_soc_interconnect.sv # Memory-mapped address decoder and AXI4-Lite bridge
+│   ├── jtag/                     # IEEE 1149.1 JTAG debug subsystem
+│   │   ├── jtag_tap.sv           # JTAG TAP controller
 │   │   ├── jtag_dtm.sv           # Debug Transport Module
-│   │   └── jtag_dm.sv            # Debug Module 控制器
+│   │   └── jtag_dm.sv            # Debug Module controller
 │   └── asic/
-│       ├── sram_bank_array.sv    # 4KB SRAM 陣列 (8 顆 512B GF180MCU SRAM Macros)
-│       ├── chip_core.sv          # Core 整合層
-│       └── chip_top.sv           # Chip Padring 頂層
-├── tb/                           # 模擬測試平台
-│   ├── az_v_soc_tb.sv            # SystemVerilog 測試平台模組
-│   └── tb_soc.cpp                # Verilator C++ 測試驅動程式 (含 JTAG 驗證與 VCD 波形)
-└── sw/                           # 裸機 C 語言韌體
-    ├── Makefile                  # 韌體編譯 Makefile
-    ├── common/
-    │   ├── crt0.s                # RISC-V 啟動組合語言程式
-    │   └── link.ld               # 連結器腳本 (4KB SRAM Layout)
-    └── examples/
-        └── soc_demo.c            # UART 輸出與韌體測試主程式
+│       ├── sram_bank_array.sv    # 4KB SRAM array (8x 512B GF180MCU SRAM macros)
+│       ├── chip_core.sv          # Core integration layer
+│       └── chip_top.sv           # Chip padframe top
+├── tb/                           # Simulation testbench
+│   ├── az_v_soc_tb.sv            # SystemVerilog testbench top
+│   └── tb_soc.cpp                # Verilator C++ testbench driver (JTAG validation & VCD trace)
+├── sw/                           # Bare-metal C firmware
+│   ├── Makefile                  # RISC-V GCC firmware build Makefile
+│   ├── common/
+│   │   ├── crt0.s                # Startup assembly code
+│   │   └── link.ld               # Linker script (4KB SRAM memory layout)
+│   └── examples/
+│       └── soc_demo.c            # UART and JTAG integration demo firmware
+├── README.md                     # English documentation (Homepage)
+└── README_zh.md                  # Traditional Chinese documentation
 ```
 
 ---
 
-## 編譯與模擬驗證 (Build & Simulation)
+## Build and Simulation
 
-### 1. 執行 Verilator 全功能模擬 (含 JTAG 驗證)
-在 `AZ_V_SoC` 根目錄執行：
+### 1. Run Verilator Simulation (with JTAG Verification)
+From the `AZ-V-SoC` repository root:
 ```bash
 make verilate
 ```
 
-### 2. 模擬驗證輸出結果
+### 2. Simulation Verification Output
 
 ```text
 [AZ_V SoC Sim] Starting Simulation with JTAG Verification...
@@ -192,3 +190,11 @@ Hello World from AZ_V SoC (AZ_V + UART + JTAG)!
    [PASS] AZ_V SoC Integration Test Successful!
 ============================================
 ```
+
+---
+
+## Related Repositories
+
+* [AZ-V32M](https://github.com/zenbear2/AZ-V32M): 32-Bit RV32I pipelined processor core with branch prediction unit.
+* [AXI-Peripheral](https://github.com/zenbear2/AXI-Peripheral): AXI4-Lite peripheral library (UART controller).
+* [KU5P-AZ-SoC](https://github.com/zenbear2/KU5P-AZ-SoC): AMD Kintex UltraScale+ FPGA implementation of the SoC.
