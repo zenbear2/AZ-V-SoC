@@ -4,7 +4,7 @@
 
 **AZ-V-SoC** (formerly **AZ_V_SoC**) is a 32-bit RISC-V System-on-Chip (SoC) architecture integrating the **AZ-V32M** processor core (with BTB, BHT, RAS branch prediction and an instruction queue), an **AXI4-Lite UART** peripheral, an **IEEE 1149.1 JTAG debug subsystem**, and a **4KB SRAM memory array**.
 
-The repository supports a **Hierarchical Hard Macro ASIC PnR Flow** (LibreLane / OpenLane on the GlobalFoundries GF180MCU PDK), directly referencing the CPU core RTL ([`AZ-V32M/rtl`](../AZ-V32M/rtl)) and UART peripheral RTL ([`AXI-Peripheral/AXI_UART/rtl`](../AXI-Peripheral/AXI_UART/rtl)).
+The repository supports a **Hierarchical Hard Macro ASIC PnR Flow** (LibreLane / OpenLane on the GlobalFoundries GF180MCU PDK), directly referencing the CPU core RTL ([`AZ-V32M/rtl`](../AZ-V32M/rtl)) and UART peripheral RTL ([`AXI-Peripheral/AXI_UART/rtl`](../AXI-Peripheral/AXI_UART/rtl)). For the FPGA implementation and prototyping platform on AMD Kintex UltraScale+ @ 100 MHz, see [**KU5P-AZ-SoC**](https://github.com/zenbear2/KU5P-AZ-SoC).
 
 ---
 
@@ -195,6 +195,6 @@ Hello World from AZ_V SoC (AZ_V + UART + JTAG)!
 
 ## Related Repositories
 
+* [KU5P-AZ-SoC](https://github.com/zenbear2/KU5P-AZ-SoC): AMD Kintex UltraScale+ FPGA implementation and prototyping platform for AZ-V-SoC @ 100 MHz.
 * [AZ-V32M](https://github.com/zenbear2/AZ-V32M): 32-Bit RV32I pipelined processor core with branch prediction unit.
 * [AXI-Peripheral](https://github.com/zenbear2/AXI-Peripheral): AXI4-Lite peripheral library (UART controller).
-* [KU5P-AZ-SoC](https://github.com/zenbear2/KU5P-AZ-SoC): AMD Kintex UltraScale+ FPGA implementation of the SoC.

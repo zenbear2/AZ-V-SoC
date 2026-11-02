@@ -4,7 +4,7 @@
 
 **AZ-V-SoC**（亦稱 **AZ_V_SoC**）整合 **AZ-V32M 32 位元 RISC-V 處理器核心**（含 BTB、BHT、RAS 分支預測單元與指令佇列）、**AXI4-Lite UART 週邊**、**IEEE 1149.1 JTAG 偵錯子系統** 與 **4KB SRAM 記憶體陣列**。
 
-本專案支援 **階層式硬體巨集 ASIC 流程 (Hierarchical Hard Macro PnR Flow)**，直接引用包含分支預測器與指令佇列的 CPU RTL ([`AZ-V32M/rtl`](../AZ-V32M/rtl)) 與 UART RTL ([`AXI-Peripheral/AXI_UART/rtl`](../AXI-Peripheral/AXI_UART/rtl))。
+本專案支援 **階層式硬體巨集 ASIC 流程 (Hierarchical Hard Macro PnR Flow)**，直接引用包含分支預測器與指令佇列的 CPU RTL ([`AZ-V32M/rtl`](../AZ-V32M/rtl)) 與 UART RTL ([`AXI-Peripheral/AXI_UART/rtl`](../AXI-Peripheral/AXI_UART/rtl))。若需在 AMD Kintex UltraScale+ FPGA 上以 100 MHz 執行硬體原型實現與驗證，請參閱 [**KU5P-AZ-SoC**](https://github.com/zenbear2/KU5P-AZ-SoC)。
 
 ---
 
@@ -190,4 +190,13 @@ Hello World from AZ_V SoC (AZ_V + UART + JTAG)!
    [PASS] AZ_V SoC Integration Test Successful!
 ============================================
 ```
+
+---
+
+## 相關專案庫 (Related Repositories)
+
+* [KU5P-AZ-SoC](https://github.com/zenbear2/KU5P-AZ-SoC)：AZ-V-SoC 於 AMD Kintex UltraScale+ FPGA 之 100 MHz 硬體原型實現專案。
+* [AZ-V32M](https://github.com/zenbear2/AZ-V32M)：具備分支預測器的 32 位元 RV32I 管線化處理器核心。
+* [AXI-Peripheral](https://github.com/zenbear2/AXI-Peripheral)：AXI4-Lite 週邊控制器庫（UART 控制器）。
+
 
